@@ -24,17 +24,22 @@ app.add_middleware(
 
 @app.get("/api/test-info/{test_type_id}")
 async def get_test_info(test_type_id: int, db: AsyncSession = Depends(database.get_db)):
-    # Hitung jumlah sesi yang tersedia untuk test_type_id ini
-    result = await db.execute(
-        select(models.MasterSession).where(models.MasterSession.test_type_id == test_type_id)
-    )
-    sessions = result.scalars().all()
+    try:
+        result = await db.execute(
+            select(models.MasterSession).where(models.MasterSession.test_type_id == test_type_id)
+        )
+        sessions = result.scalars().all()
 
-    return {
-        "total_sessions": len(sessions),
-        "test_name": "Tes Kecermatan", # Bisa diambil dari tabel test_types
-        "session_ids": [s.session_order for s in sessions]
-    }
+        return {
+            "total_sessions": len(sessions),
+            "test_name": "Tes Kecermatan",
+            "session_ids": [s.session_order for s in sessions]
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
 @app.get("/api/session-data/{order}")
 async def read_session(order: int, db: AsyncSession = Depends(database.get_db)):

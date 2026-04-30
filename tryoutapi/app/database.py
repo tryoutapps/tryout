@@ -1,15 +1,28 @@
-import urllib.parse
+import os
+import ssl
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from dotenv import load_dotenv
 
-# Password asli: P@ssw0rd
-password = urllib.parse.quote_plus("P@ssw0rd")
+load_dotenv()
 
-# Maka URL akan menjadi: postgresql+asyncpg://postgres:P%40ssw0rd@localhost:5432/db_psikotes
-DATABASE_URL = f"postgresql+asyncpg://postgres:{password}@localhost:5432/tryoutdb"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
-AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+ssl_context = ssl.create_default_context()
+
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=True,
+    connect_args={"ssl": ssl_context}
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
 Base = declarative_base()
 
 async def get_db():
