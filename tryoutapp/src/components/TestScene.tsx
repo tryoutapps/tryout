@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_ENDPOINTS } from '../config';
+import { saveProgress, getProgress, clearProgress } from '../utils/storage';
 
 const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
-  const [session, setSession] = useState(1);
+  const savedData = getProgress();
+  const [session, setSession] = useState(savedData?.session || 1);
   const [keyBox, setKeyBox] = useState<any[]>([]);
   const [questionItems, setQuestionItems] = useState<any[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState("");
@@ -12,7 +14,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
   const [score, setScore] = useState(0);
   const [wrong, setWrong] = useState(0);
   const [isReady, setIsReady] = useState(false);
-  const [sessionResults, setSessionResults] = useState<any[]>([]);
+  const [sessionResults, setSessionResults] = useState<any[]>(savedData?.sessionResults || []);
 
   const [timeLeft, setTimeLeft] = useState(5);
   const [isBreak, setIsBreak] = useState(false);
@@ -40,7 +42,10 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
     };
     getTestInfo();
   }, []);
-
+  const handleRestart = () => {
+    clearProgress(); // <--- HAPUS DI SINI agar balik ke Sesi 1
+    onRestart();     // Kembali ke dashboard
+  };
   const preloadImages = (items: any[]) => {
     items.forEach((item) => {
       const img = new Image();
@@ -105,6 +110,18 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
     return () => clearTimeout(timer);
   }, [timeLeft, isBreak, isFinished, isReady]);
 
+  useEffect(() => {
+    // Hanya simpan jika tes belum selesai (isFinished = false)
+    if (!isFinished) {
+      saveProgress({
+        session,
+        score,
+        wrong,
+        sessionResults
+      });
+    }
+  }, [session, score, wrong, sessionResults, isFinished]);
+
   // 3. Logika Menjawab
   const handleAnswer = (letter: string) => {
     if (!isReady || isBreak || isFinished) return;
@@ -120,31 +137,47 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
   };
 
   const handleEndOfSession = () => {
-    if (isBreak || isFinished) return;
+  if (isBreak || isFinished) return;
 
-    setIsBreak(true);
-    setIsReady(false);
+  setIsBreak(true);
+  setIsReady(false);
 
-    // Simpan hasil sesi ke state results
-    const resultData = {
-      session: session, // Pastikan key sesuai dengan yang dirender di table
-      correct: currentSessionCorrect,
-      wrong: currentSessionWrong
-    };
-    setSessionResults(prev => [...prev, resultData]);
-
-    if (session < totalSessions) {
-      setTimeout(() => {
-        setCurrentSessionCorrect(0);
-        setCurrentSessionWrong(0);
-        setSession(prev => prev + 1);
-        setIsBreak(false); // Sesi baru akan di-fetch oleh useEffect
-      }, 3000);
-    } else {
-      setIsFinished(true);
-      saveFinalResult();
-    }
+  // 1. Siapkan data hasil sesi ini
+  const resultData = {
+    session: session,
+    correct: currentSessionCorrect,
+    wrong: currentSessionWrong
   };
+
+  // 2. Update sessionResults secara lokal dulu agar bisa langsung disimpan
+  const updatedResults = [...sessionResults, resultData];
+  setSessionResults(updatedResults);
+
+  if (session < totalSessions) {
+    const nextSession = session + 1; // Hitung sesi berikutnya secara manual
+
+    setTimeout(() => {
+      // 3. Simpan ke LocalStorage SEBELUM setSession untuk memastikan data sinkron
+      saveProgress({
+        session: nextSession,
+        score: score,
+        wrong: wrong,
+        sessionResults: updatedResults
+      });
+
+      // 4. Update State
+      setCurrentSessionCorrect(0);
+      setCurrentSessionWrong(0);
+      setSession(nextSession);
+      setIsBreak(false);
+    }, 3000);
+  } else {
+    // JIKA SUDAH SESI TERAKHIR
+    setIsFinished(true);
+    saveFinalResult();
+    clearProgress(); // Hapus karena sudah tuntas
+  }
+};
 
   const saveFinalResult = async () => {
     // Ambil data terbaru karena state mungkin belum update sempurna saat fungsi dipanggil
@@ -200,7 +233,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
             <h3>Total Benar: {score}</h3>
             <h3>Total Salah: {wrong}</h3>
           </div>
-          <button className="btn-restart" onClick={onRestart}>Selesai</button>
+          <button className="btn-restart" onClick={handleRestart}>Selesai</button>
         </div>
       </div>
     );
