@@ -7,6 +7,7 @@ venv/
 # React/Vite
 node_modules/
 dist/
+.env
 
 # Editor
 .vscode/

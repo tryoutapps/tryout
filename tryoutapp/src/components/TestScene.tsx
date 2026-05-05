@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_ENDPOINTS } from '../config';
 
 const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
   const [session, setSession] = useState(1);
@@ -29,7 +30,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
   useEffect(() => {
     const getTestInfo = async () => {
       try {
-        const res = await fetch('http://localhost:8002/api/test-info/1');
+        const res = await fetch(API_ENDPOINTS.TEST_INFO(1));
         const data = await res.json();
         setTotalSessions(data.total_sessions);
         setIsLoading(false);
@@ -43,7 +44,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
   const preloadImages = (items: any[]) => {
     items.forEach((item) => {
       const img = new Image();
-      img.src = `/src/assets/${item.img}`;
+      img.src = `/assets/${item.img}`;
     });
   };
 
@@ -55,7 +56,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
     setIsReady(false);
 
     try {
-      const res = await fetch(`http://localhost:8002/api/session-data/${sId}`);
+      const res = await fetch(API_ENDPOINTS.SESSION_DATA(sId));
       const data = await res.json();
 
       preloadImages(data.key_box);
@@ -160,7 +161,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
     };
 
     try {
-      await fetch('http://localhost:8002/api/save-result', {
+      await fetch(API_ENDPOINTS.SAVE_RESULT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
