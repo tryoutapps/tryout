@@ -228,7 +228,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
           <div className="key-section">
             {keyBox.map(item => (
               <div key={item.id} className="key-item">
-                <img src={`/src/assets/${item.img}`} alt={item.id} />
+                <img src={`/assets/${item.img}`} alt={item.id} />
                 <div className="label">{item.id}</div>
               </div>
             ))}
