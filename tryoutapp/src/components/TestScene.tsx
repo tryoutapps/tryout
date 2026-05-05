@@ -237,7 +237,7 @@ const TestScene: React.FC<{ onRestart: () => void }> = ({ onRestart }) => {
           <div className="question-grid">
             {questionItems.map((item, idx) => (
               <div key={idx} className="question-item">
-                <img src={`/src/assets/${item.img}`} alt="target" />
+                <img src={`/assets/${item.img}`} alt="target" />
               </div>
             ))}
           </div>
