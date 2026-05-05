@@ -1,5 +1,5 @@
 // Mengambil URL dari .env, jika tidak ada gunakan fallback localhost
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://tryout-production-f813.up.railway.app/api";
 
 export const API_ENDPOINTS = {
   TEST_INFO: (id: number) => `${BASE_URL}/test-info/${id}`,
